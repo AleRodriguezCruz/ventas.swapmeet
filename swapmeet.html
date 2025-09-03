@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto de Venta Pro</title>
+    <style>
+        /* --- NUEVA PALETA DE COLORES Y ESTILOS --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F7FAFC; /* Gris muy claro */
+            margin: 0;
+            padding: 20px;
+            color: #2D3748; /* Gris oscuro para texto */
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .items-panel, .sale-panel {
+            background-color: #FFFFFF;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .items-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #E2E8F0; /* Borde más sutil */
+            padding-bottom: 10px;
+            color: #1A202C;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+        }
+
+        .item-btn {
+            padding: 20px 10px;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            background-color: #EDF2F7; /* Gris azulado claro */
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .item-btn:hover {
+            background-color: #E2E8F0;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .sale-panel {
+            flex: 2;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sale-table-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .sale-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .sale-table th, .sale-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #EDF2F7;
+        }
+
+        .sale-table th {
+            background-color: #F7FAFC;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        
+        .sale-table td.text-right { text-align: right; }
+
+        .totals-section {
+            padding-top: 20px;
+            margin-top: auto;
+            border-top: 1px solid #E2E8F0;
+            text-align: right;
+        }
+        
+        .summary-line {
+            font-size: 16px;
+            color: #4A5568;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+
+        .grand-total {
+            font-size: 28px;
+            font-weight: bold;
+            color: #5A67D8; /* Indigo */
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap; /* Para que los botones se ajusten en móvil */
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .export-btn { background-color: #38A169; } /* Verde */
+        .export-btn:hover { background-color: #2F855A; }
+
+        .clear-btn { background-color: #E53E3E; } /* Rojo */
+        .clear-btn:hover { background-color: #C53030; }
+
+        .discount-btn { background-color: #DD6B20; } /* Naranja */
+        .discount-btn:hover { background-color: #C05621; }
+
+        @media (max-width: 800px) {
+            body { padding: 10px; }
+            .container { flex-direction: column; gap: 10px; }
+            .items-panel, .sale-panel { min-width: 100%; }
+            .grand-total { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="items-panel">
+            <h2>Artículos</h2>
+            <div id="items-grid" class="items-grid"></div>
+        </div>
+
+        <div class="sale-panel">
+            <h2>Venta Actual</h2>
+            <div class="sale-table-container">
+                <table class="sale-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-right">Precio</th>
+                            <th class="text-right">Cant.</th>
+                            <th class="text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sale-table-body"></tbody>
+                </table>
+            </div>
+            
+            <div class="totals-section">
+                <div class="summary-line">
+                    <span>Fecha:</span>
+                    <span id="current-date">--/--/----</span>
+                </div>
+                <div class="summary-line">
+                    <span>Total de Artículos:</span>
+                    <span id="total-items">0</span>
+                </div>
+
+                <div class="grand-total" id="grand-total">$0.00</div>
+                <div class="actions">
+                    <button id="discount-btn" class="action-btn discount-btn">Descuento</button>
+                    <button id="clear-btn" class="action-btn clear-btn">Limpiar</button>
+                    <button id="export-btn" class="action-btn export-btn">Exportar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const productos = [
+                { nombre: 'PANTALON', precio: 350.00 },
+                { nombre: 'PANTALON MEZCLILLA', precio: 400.00 },
+                { nombre: 'SHORT', precio: 200.00 },
+                { nombre: 'SHORT MARCA', precio: 300.00 },
+                { nombre: 'PANS', precio: 280.00 },
+                { nombre: 'PANS MARCA', precio: 450.00 },
+                { nombre: 'CAMIZA MC', precio: 220.00 },
+                { nombre: 'CAMIZA ML', precio: 250.00 },
+                { nombre: 'POLO', precio: 280.00 },
+                { nombre: 'POLO MARCA', precio: 400.00 },
+                { nombre: 'PLAYERA', precio: 180.00 },
+                { nombre: 'PLAYERA MARCA', precio: 320.00 },
+            ];
+
+            const itemsGrid = document.getElementById('items-grid');
+            const saleTableBody = document.getElementById('sale-table-body');
+            const grandTotalElement = document.getElementById('grand-total');
+            const exportBtn = document.getElementById('export-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const totalItemsElement = document.getElementById('total-items');
+            const currentDateElement = document.getElementById('current-date');
+            // NUEVO: Referencia al botón de descuento
+            const discountBtn = document.getElementById('discount-btn');
+
+            function renderizarProductos() {
+                productos.forEach(producto => {
+                    const button = document.createElement('button');
+                    button.className = 'item-btn';
+                    button.innerText = producto.nombre;
+                    button.addEventListener('click', () => agregarProductoAVenta(producto));
+                    itemsGrid.appendChild(button);
+                });
+            }
+
+            function agregarProductoAVenta(producto) {
+                const filaExistente = document.querySelector(`tr[data-nombre="${producto.nombre}"]`);
+                if (filaExistente) {
+                    const displayCantidad = filaExistente.querySelector('.quantity-display');
+                    displayCantidad.innerText = parseInt(displayCantidad.innerText) + 1;
+                } else {
+                    const fila = document.createElement('tr');
+                    fila.setAttribute('data-nombre', producto.nombre);
+                    fila.innerHTML = `
+                        <td>${producto.nombre}</td>
+                        <td class="precio text-right">${producto.precio.toFixed(2)}</td>
+                        <td class="text-right"><span class="quantity-display">1</span></td>
+                        <td class="subtotal text-right">${producto.precio.toFixed(2)}</td>
+                    `;
+                    saleTableBody.appendChild(fila);
+                }
+                actualizarTotales();
+            }
+
+            // NUEVO: Función para aplicar el descuento
+            function aplicarDescuento() {
+                const montoStr = prompt("Ingresa el monto del descuento:", "0");
+
+                if (montoStr === null || montoStr.trim() === "") return; // El usuario canceló o no escribió nada
+
+                const monto = parseFloat(montoStr);
+                if (isNaN(monto) || monto < 0) {
+                    alert("Por favor, ingresa un número válido y positivo para el descuento.");
+                    return;
+                }
+
+                // Convertimos el monto a un valor negativo para que reste
+                const descuento = -Math.abs(monto);
+
+                // Revisa si ya existe un descuento para actualizarlo, si no, lo crea
+                const filaExistente = document.querySelector('tr[data-nombre="Descuento"]');
+                if (filaExistente) {
+                    filaExistente.querySelector('.precio').innerText = descuento.toFixed(2);
+                    filaExistente.querySelector('.subtotal').innerText = descuento.toFixed(2);
+                } else {
+                    const fila = document.createElement('tr');
+                    fila.setAttribute('data-nombre', 'Descuento');
+                    fila.innerHTML = `
+                        <td><strong>Descuento</strong></td>
+                        <td class="precio text-right">${descuento.toFixed(2)}</td>
+                        <td class="text-right"><span class="quantity-display">1</span></td>
+                        <td class="subtotal text-right">${descuento.toFixed(2)}</td>
+                    `;
+                    saleTableBody.appendChild(fila);
+                }
+                actualizarTotales();
+            }
+
+            function actualizarTotales() {
+                let grandTotal = 0;
+                let totalItems = 0;
+
+                const filas = saleTableBody.querySelectorAll('tr');
+
+                filas.forEach(fila => {
+                    const precio = parseFloat(fila.querySelector('.precio').innerText);
+                    const cantidad = parseInt(fila.querySelector('.quantity-display').innerText);
+                    
+                    // No suma los descuentos al contador de artículos
+                    if (fila.getAttribute('data-nombre') !== 'Descuento') {
+                        totalItems += cantidad;
+                    }
+                    
+                    const subtotal = precio * cantidad;
+                    fila.querySelector('.subtotal').innerText = subtotal.toFixed(2);
+                    grandTotal += subtotal;
+                });
+
+                grandTotalElement.innerText = `$${grandTotal.toFixed(2)}`;
+                totalItemsElement.innerText = totalItems;
+            }
+            
+            function mostrarFechaActual() {
+                const hoy = new Date();
+                currentDateElement.innerText = hoy.toLocaleDateString('es-MX', {
+                    year: 'numeric', month: '2-digit', day: '2-digit'
+                });
+            }
+
+            function exportarCSV() {
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Producto,Precio,Cantidad,Subtotal\n"; 
+
+                const filas = saleTableBody.querySelectorAll('tr');
+                filas.forEach(fila => {
+                    const nombre = fila.cells[0].innerText;
+                    const precio = fila.cells[1].innerText;
+                    const cantidad = fila.querySelector('.quantity-display').innerText;
+                    const subtotal = fila.cells[3].innerText;
+                    csvContent += `"${nombre}",${precio},${cantidad},${subtotal}\n`;
+                });
+                
+                const fecha = currentDateElement.innerText;
+                const items = totalItemsElement.innerText;
+                const totalVenta = grandTotalElement.innerText.replace('$', '');
+
+                csvContent += `\nFecha:,${fecha}\n`;
+                csvContent += `Total de Artículos:,${items}\n`;
+                csvContent += `Total Venta:,${totalVenta}\n`;
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `venta-${fecha.replace(/\//g, '-')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            function limpiarVenta() {
+                saleTableBody.innerHTML = '';
+                actualizarTotales();
+            }
+
+            // --- EVENT LISTENERS ---
+            exportBtn.addEventListener('click', exportarCSV);
+            clearBtn.addEventListener('click', limpiarVenta);
+            discountBtn.addEventListener('click', aplicarDescuento); // NUEVO
+            
+            // --- INICIALIZACIÓN ---
+            renderizarProductos();
+            mostrarFechaActual();
+        });
+    </script>
+</body>
+</html>
